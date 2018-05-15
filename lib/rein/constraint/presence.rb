@@ -26,8 +26,17 @@ module Rein
         name = Util.constraint_name(table, attribute, 'presence', options)
         table = Util.wrap_identifier(table)
         attribute = Util.wrap_identifier(attribute)
+        check_conditions = ["(#{attribute} IS NOT NULL)"]
+
+        # Handle presence for range datatypes
+        check_conditions << case options[:column_type].to_s
+        when /^.*range$/
+          range_presence_constraint(attribute)
+        else
+          generic_presence_constraint(attribute)
+        end
         conditions = Util.conditions_with_if(
-          "(#{attribute} IS NOT NULL) AND (#{attribute} !~ '^\\s*$')",
+          check_conditions.join(' AND '),
           options
         )
         execute("ALTER TABLE #{table} ADD CONSTRAINT #{name} CHECK (#{conditions})")
@@ -37,6 +46,14 @@ module Rein
         name = Util.constraint_name(table, attribute, 'presence', options)
         table = Util.wrap_identifier(table)
         execute("ALTER TABLE #{table} DROP CONSTRAINT #{name}")
+      end
+
+      def generic_presence_constraint(attribute)
+        "(#{attribute} !~ '^\\s*$')"
+      end
+
+      def range_presence_constraint(attribute)
+        "(#{attribute} != 'empty')"
       end
     end
   end
