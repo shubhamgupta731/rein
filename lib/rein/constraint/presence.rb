@@ -34,16 +34,21 @@ module Rein
       def _get_conditions(attribute, options)
         check_conditions = ["(#{attribute} IS NOT NULL)"]
 
-        check_conditions << case options[:column_type].to_s.downcase
-          when /^.*range$/
-            _range_presence_constraint(attribute)
-          else
-            _generic_presence_constraint(attribute)
-        end
+        check_conditions <<
+          _fetch_presence_constraint(attribute, options[:column_type])
         Util.conditions_with_if(
           check_conditions.join(' AND '),
           options
         )
+      end
+
+      def _fetch_presence_constraint(attribute, column_type)
+        case column_type.to_s.downcase
+        when /^.*range$/
+          _range_presence_constraint(attribute)
+        else
+          _generic_presence_constraint(attribute)
+        end
       end
 
       def _remove_presence_constraint(table, attribute, options = {})
