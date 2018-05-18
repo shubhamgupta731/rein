@@ -14,7 +14,7 @@ module Rein
     end
 
     def self.wrap_identifier(attribute)
-      if /^".*"$/ =~ attribute
+      if /^".*"$/.match(attribute)
         attribute
       else
         "\"#{attribute}\""
